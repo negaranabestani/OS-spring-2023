@@ -657,3 +657,14 @@ procdump(void) {
         printf("\n");
     }
 }
+int process_tick(int pid){
+    struct proc *p;
+    for (p = proc; p < &proc[NPROC]; p++) {
+        acquire(&p->lock);
+        if (p->pid==pid) {
+            return ticks-p->startingTick;
+        }
+        release(&p->lock);
+    }
+    return -1;
+}
