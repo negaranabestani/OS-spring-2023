@@ -76,10 +76,10 @@ sys_kill(void)
   argint(0, &pid);
   return kill(pid);
 }
-int sys_proctick(void){
+uint64 sys_proctick(void){
     int pid;
     argint(0, &pid);
-    return process_tick(pid);
+    return proctick(pid);
 }
 
 // return how many clock tick interrupts have occurred

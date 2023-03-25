@@ -657,14 +657,18 @@ procdump(void) {
         printf("\n");
     }
 }
-int process_tick(int pid){
+int proctick(int pid){
     struct proc *p;
-    for (p = proc; p < &proc[NPROC]; p++) {
-        acquire(&p->lock);
-        if (p->pid==pid) {
-            return ticks-p->startingTick;
+    for (;;) {
+        // Avoid deadlock by ensuring that devices can interrupt.
+        intr_on();
+        for (p = proc; p < &proc[NPROC]; p++) {
+//            acquire(&p->lock);
+            if (p->pid == pid) {
+                return ticks - p->startingTick;
+            }
+//            release(&p->lock);
         }
-        release(&p->lock);
     }
     return -1;
 }
