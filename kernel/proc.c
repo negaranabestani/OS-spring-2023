@@ -4,6 +4,7 @@
 #include "riscv.h"
 #include "spinlock.h"
 #include "proc.h"
+#include "sysinfo.h"
 #include "defs.h"
 
 struct cpu cpus[NCPU];
@@ -18,6 +19,7 @@ struct spinlock pid_lock;
 extern void forkret(void);
 
 static void freeproc(struct proc *p);
+int find_active_proc();
 
 extern char trampoline[]; // trampoline.S
 
@@ -118,6 +120,10 @@ allocproc(void) {
     found:
     p->pid = allocpid();
     p->state = USED;
+    // initialize the starting tick of the new process
+    acquire(&np->lock);
+    np->startingTick = ticks;
+    release(&np->lock);
 
     // Allocate a trapframe page.
     if ((p->trapframe = (struct trapframe *) kalloc()) == 0) {
@@ -309,10 +315,7 @@ fork(void) {
     acquire(&np->lock);
     np->state = RUNNABLE;
     release(&np->lock);
-// initialize the starting tick of the new process
-    acquire(&np->lock);
-    np->startingTick = ticks;
-    release(&np->lock);
+
     return pid;
 }
 
@@ -670,5 +673,25 @@ int proctick(int pid){
 //            release(&p->lock);
         }
     }
-    return -1;
+}
+int sysinfo(struct sysinfo *info){
+    int uptime=ticks/10000000;
+    info->uptime=uptime;
+    info->procs=find_active_proc();
+    info->freeram=calculate_free_ram();
+    info->totalram=PHYSTOP;
+
+}
+
+int find_active_proc(){
+    int counter=0;
+    struct proc *p;
+    for (p = proc; p < &proc[NPROC]; p++) {
+//            acquire(&p->lock);
+        if (p->state==RUNNING) {
+            counter++;
+        }
+//            release(&p->lock);
+    }
+    return counter;
 }
