@@ -82,10 +82,12 @@ kalloc(void)
 }
 int calculate_free_ram(){
     int free_bytes=0;
+    acquire(&kmem.lock);
     struct run *page=kmem.freelist;
-    while (page->next!=null){
+    while (page->next!=0){
         free_bytes+=PGSIZE;
         page=page->next;
     }
+    release(&kmem.lock);
     return free_bytes;
 }

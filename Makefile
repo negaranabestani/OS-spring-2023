@@ -117,9 +117,9 @@ mkfs/mkfs: mkfs/mkfs.c $K/fs.h $K/param.h
 
 UPROGS=\
 	$U/_cat\
+	$U/_sysinfo\
 	$U/_echo\
 	$U/_forktest\
-	$U/_proctick\
 	$U/_grep\
 	$U/_init\
 	$U/_kill\
@@ -152,7 +152,7 @@ GDBPORT = $(shell expr `id -u` % 5000 + 25000)
 # QEMU's gdb stub command line changed in 0.11
 QEMUGDB = $(shell if $(QEMU) -help | grep -q '^-gdb'; \
 	then echo "-gdb tcp::$(GDBPORT)"; \
-	else echo "-s -p $(GDBPORT)"; fi )
+	else echo "-s -p $(GDBPORT)"; fi)
 ifndef CPUS
 CPUS := 3
 endif

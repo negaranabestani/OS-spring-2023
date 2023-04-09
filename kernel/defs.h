@@ -64,7 +64,7 @@ void            ramdiskrw(struct buf*);
 void*           kalloc(void);
 void            kfree(void *);
 void            kinit(void);
-int             int calculate_free_ram();
+int             calculate_free_ram();
 
 // log.c
 void            initlog(int, struct superblock*);
@@ -85,10 +85,9 @@ void            printfinit(void);
 
 // proc.c
 int             cpuid(void);
-int             sysinfo(void);
 void            exit(int);
+int             sysinfo(uint64);
 int             fork(void);
-int             proctick(int);
 int             growproc(int);
 void            proc_mapstacks(pagetable_t);
 pagetable_t     proc_pagetable(struct proc *);

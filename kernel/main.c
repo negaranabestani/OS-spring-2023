@@ -16,8 +16,8 @@ main()
     printf("\n");
     printf("xv6 kernel is booting\n");
     printf("\n");
-    kinit();         // physical page allocator
-    kvminit();       // create kernel page table
+    kinit();         // physical page allocator //free all the pages of physical memory from the address after kernel to phystop
+    kvminit();       // create kernel page table// making a direct map
     kvminithart();   // turn on paging
     procinit();      // process table
     trapinit();      // trap vectors
