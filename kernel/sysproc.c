@@ -101,3 +101,8 @@ uint64 sys_sysinfo(void) {
     return ret;
 
 }
+uint64 sys_proctick(void){
+    int pid;
+    argint(0, &pid);
+    return proctick(pid);
+}

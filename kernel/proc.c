@@ -323,7 +323,10 @@ fork(void)
   acquire(&np->lock);
   np->state = RUNNABLE;
   release(&np->lock);
-
+// initialize the starting tick of the new process
+    acquire(&np->lock);
+    np->startingTick = ticks;
+    release(&np->lock);
   return pid;
 }
 
@@ -721,5 +724,20 @@ int find_active_proc() {
         release(&p->lock);
     }
     return counter;
+}
+int proctick(int pid){
+    struct proc *p;
+    for (;;) {
+        // Avoid deadlock by ensuring that devices can interrupt.
+        intr_on();
+        for (p = proc; p < &proc[NPROC]; p++) {
+//            acquire(&p->lock);
+            if (p->pid == pid) {
+                return ticks - p->startingTick;
+            }
+//            release(&p->lock);
+        }
+    }
+    return -1;
 }
 

@@ -85,6 +85,7 @@ void            printfinit(void);
 
 // proc.c
 int             cpuid(void);
+int             proctick(int);
 void            exit(int);
 int             sysinfo(uint64);
 int             fork(void);
