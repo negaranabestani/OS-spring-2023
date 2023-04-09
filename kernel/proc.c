@@ -689,7 +689,7 @@ procdump(void)
 int sysinfo(uint64 uinfo) {
     struct sysinfo info;
 //    uint64 addr=0;
-    int uptime = ticks / 10000000;
+    int uptime = ticks / 10000;
 //    info.uptime = uptime;
 //    info.procs = find_active_proc();
 //    info.freeram = calculate_free_ram();
