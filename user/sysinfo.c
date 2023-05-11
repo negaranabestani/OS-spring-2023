@@ -16,7 +16,7 @@ int main(){
 //    printf("before: %p\n",&info);
     sysinfo((uint64)&info);
 //    printf("after: %p\n",&info);
-    printf("uptime: %f\n",info.uptime);
+    printf("uptime: %d\n",info.uptime);
     printf("total ram: %d\n",info.totalram);
     printf("free ram: %d\n",info.freeram);
     printf("active processes: %d\n",info.procs);
