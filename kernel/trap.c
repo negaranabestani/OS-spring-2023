@@ -13,7 +13,7 @@ extern char trampoline[], uservec[], userret[];
 
 // in kernelvec.S, calls kerneltrap().
 void kernelvec();
-
+void update_pinfo();
 extern int devintr();
 
 void
@@ -165,10 +165,25 @@ clockintr()
 {
   acquire(&tickslock);
   ticks++;
+  update_pinfo();
   wakeup(&ticks);
   release(&tickslock);
 }
+void update_pinfo(){
+    struct proc *p;
+    for (p = proc; p < &proc[NPROC]; p++) {
+        acquire(&p->lock);
+        if (p->state ==SLEEPING ) {
+            p->sleeping_time++;
+        } else if (p->state == RUNNING) {
+            p->running_time++;
+        }else if (p->state == RUNNABLE) {
+            p->ready_time++;
+        }
+        release(&p->lock);
 
+    }
+}
 // check if it's an external interrupt or software interrupt,
 // and handle it.
 // returns 2 if timer interrupt,

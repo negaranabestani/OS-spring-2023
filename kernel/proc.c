@@ -6,6 +6,7 @@
 #include "proc.h"
 #include "sysinfo.h"
 #include "defs.h"
+#include "procinfo.h"
 
 struct cpu cpus[NCPU];
 
@@ -513,7 +514,9 @@ void default_Scheduler() {
         }
     }
 }
+void update_procinfo(struct proc *p){
 
+}
 
 // Switch to scheduler.  Must hold only p->lock
 // and have changed proc->state. Saves and restores
@@ -717,30 +720,41 @@ procdump(void) {
 
 int sysinfo(uint64 uinfo) {
     struct sysinfo info;
-//    uint64 addr=0;
     int uptime = ticks / 10;
-//    info.uptime = uptime;
-//    info.procs = find_active_proc();
-//    info.freeram = calculate_free_ram();
-//    info.totalram = PHYSTOP - KERNBASE;
-
     info.uptime = uptime;
     info.procs = find_active_proc();
     info.freeram = calculate_free_ram();
     info.totalram = PHYSTOP - KERNBASE;
-//    uint64 addr=(uint64)uinfo;
     if (copyout(myproc()->pagetable, uinfo, (char *) &info, sizeof(struct sysinfo)) < 0) {
         return -1;
     }
 
-//    printf("addr: %p\n",addr);
-//    printf("middle: %p\n",uinfo);
-//    printf("uptime: %d\n",uinfo.uptime);
-//    printf("total ram: %d\n",uinfo.totalram);
-//    printf("free ram: %d\n",uinfo.freeram);
-//    printf("active processes: %d\n",uinfo.procs);
     return 0;
 }
+
+int procinfo(uint64 uinfo, int pid) {
+    struct procinfo info;
+    struct proc *p;
+    int found=0;
+    for (p = proc; p < &proc[NPROC]; p++) {
+//            acquire(&p->lock);
+        if (p->pid == pid) {
+            found=1;
+            break;
+        }
+    }
+    if(found==0)
+        return -1;
+    info.cpu_burst_time=(p->running_time)/10;
+    info.waiting_time=p->sleeping_time/10;
+    info.turnaround_time=(p->termination_time-p->startingTick)/10;
+    if (copyout(myproc()->pagetable, uinfo, (char *) &info, sizeof(struct procinfo)) < 0) {
+        return -1;
+    }
+
+    return 0;
+}
+
 
 int find_active_proc() {
     int counter = 0;
