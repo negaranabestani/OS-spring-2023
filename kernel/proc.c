@@ -18,8 +18,6 @@ struct spinlock pid_lock;
 
 extern void forkret(void);
 
-void fcfs();
-
 static void freeproc(struct proc *p);
 
 int find_active_proc();
@@ -434,52 +432,7 @@ wait(uint64 addr) {
 //  - swtch to start running that process.
 //  - eventually that process transfers control
 //    via swtch back to the scheduler.
-void
-scheduler(void) {
-    fcfs();
-}
 
-void
-fcfs() {
-    struct proc *p;
-    struct cpu *c = mycpu();
-
-    c->proc = 0;
-    for (;;) {
-        *// Avoid deadlock by ensuring that devices can interrupt.*
-                intr_on();
-        int found = 0;
-        struct proc *next_proc;
-        int min_clock = 2147483647;
-        for (p = proc; p < &proc[NPROC]; p++) {
-            acquire(&p->lock);
-            if (p->state == RUNNABLE) {
-                p_clock = ticks - &p->startingTick;
-                if (p->pid != 0 && p->pid != 1 && p_clock < min_clock) {
-                    found = 1;
-                    min_clock = p_clock;
-                    next_proc = p;
-                }
-            } else {
-                release(&p->lock);
-            }
-
-        }
-        if (found == 0) {
-            intr_on();
-            asm volatile("wfi");
-        } else {
-            next_proc->state = RUNNING;
-            c->proc = next_proc;
-            swtch(&c->context, &next_proc->context);
-            c->proc = 0;
-            release(next_proc->lock);
-        }
-
-
-    }
-
-}
 
 void default_Scheduler() {
     struct proc *p;
@@ -487,8 +440,8 @@ void default_Scheduler() {
 
     c->proc = 0;
     for (;;) {
-        *// Avoid deadlock by ensuring that devices can interrupt.*
-                intr_on();
+        // Avoid deadlock by ensuring that devices can interrupt.*
+        intr_on();
         int found = 0;
         for (p = proc; p < &proc[NPROC]; p++) {
             acquire(&p->lock);
@@ -496,6 +449,7 @@ void default_Scheduler() {
                 // Switch to chosen process.  It is the process's job
                 // to release its lock and then reacquire it
                 // before jumping back to us.
+                found = 1;
                 p->state = RUNNING;
                 c->proc = p;
                 swtch(&c->context, &p->context);
@@ -505,15 +459,67 @@ void default_Scheduler() {
                 c->proc = 0;
             }
             release(&p->lock);
+            if (found == 0) {
+                intr_on();
+                asm volatile("wfi");
+            }
         }
 
+
+    }
+}
+
+
+void
+scheduler(void) {
+    struct proc *p = 0;
+    struct cpu *c = mycpu();
+
+    c->proc = 0;
+    for (;;) {
+        // Avoid deadlock by ensuring that devices can interrupt.*
+        intr_on();
+        int found = 0;
+        struct proc *minP = 0;
+        for (p = proc; p < &proc[NPROC]; p++) {
+
+
+            acquire(&p->lock);
+            if (p->state != RUNNABLE)
+                continue;
+
+            found=1;
+            if (p->pid > 1) {
+                if (minP != 0) {
+                    if (p->startingTick < minP->startingTick)
+                        minP = p;
+                } else
+                    minP = p;
+            }
+
+            release(&p->lock);
+
+
+        }
+        if (minP != 0 && minP->state == RUNNABLE)
+            p = minP;
+
+        acquire(&p->lock);
+        p->state = RUNNING;
+        c->proc = p;
+        swtch(&c->context, &p->context);
+        // Process is done running for now.
+        // It should have changed its p->state before coming back.
+        c->proc = 0;
+        release(&p->lock);
         if (found == 0) {
             intr_on();
             asm volatile("wfi");
         }
+
+
     }
 }
-
 
 // Switch to scheduler.  Must hold only p->lock
 // and have changed proc->state. Saves and restores
