@@ -437,59 +437,13 @@ wait(uint64 addr) {
 //    via swtch back to the scheduler.
 void
 scheduler(void) {
-    fcfs();
-}
-
-void
-fcfs() {
     struct proc *p;
     struct cpu *c = mycpu();
 
     c->proc = 0;
     for (;;) {
-        *// Avoid deadlock by ensuring that devices can interrupt.*
-                intr_on();
-        int found = 0;
-        struct proc *next_proc;
-        int min_clock = 2147483647;
-        for (p = proc; p < &proc[NPROC]; p++) {
-            acquire(&p->lock);
-            if (p->state == RUNNABLE) {
-                p_clock = ticks - &p->startingTick;
-                if (p->pid != 0 && p->pid != 1 && p_clock < min_clock) {
-                    found = 1;
-                    min_clock = p_clock;
-                    next_proc = p;
-                }
-            } else {
-                release(&p->lock);
-            }
-
-        }
-        if (found == 0) {
-            intr_on();
-            asm volatile("wfi");
-        } else {
-            next_proc->state = RUNNING;
-            c->proc = next_proc;
-            swtch(&c->context, &next_proc->context);
-            c->proc = 0;
-            release(next_proc->lock);
-        }
-
-
-    }
-
-}
-
-void default_Scheduler() {
-    struct proc *p;
-    struct cpu *c = mycpu();
-
-    c->proc = 0;
-    for (;;) {
-        *// Avoid deadlock by ensuring that devices can interrupt.*
-                intr_on();
+        // Avoid deadlock by ensuring that devices can interrupt.*
+        intr_on();
         int found = 0;
         for (p = proc; p < &proc[NPROC]; p++) {
             acquire(&p->lock);
@@ -514,7 +468,42 @@ void default_Scheduler() {
         }
     }
 }
-void update_procinfo(struct proc *p){
+
+
+void default_Scheduler() {
+    struct proc *p;
+    struct cpu *c = mycpu();
+
+    c->proc = 0;
+    for (;;) {
+        // Avoid deadlock by ensuring that devices can interrupt.*
+        intr_on();
+        int found = 0;
+        for (p = proc; p < &proc[NPROC]; p++) {
+            acquire(&p->lock);
+            if (p->state == RUNNABLE) {
+                // Switch to chosen process.  It is the process's job
+                // to release its lock and then reacquire it
+                // before jumping back to us.
+                p->state = RUNNING;
+                c->proc = p;
+                swtch(&c->context, &p->context);
+
+                // Process is done running for now.
+                // It should have changed its p->state before coming back.
+                c->proc = 0;
+            }
+            release(&p->lock);
+        }
+
+        if (found == 0) {
+            intr_on();
+            asm volatile("wfi");
+        }
+    }
+}
+
+void update_procinfo(struct proc *p) {
 
 }
 
@@ -735,19 +724,22 @@ int sysinfo(uint64 uinfo) {
 int procinfo(uint64 uinfo, int pid) {
     struct procinfo info;
     struct proc *p;
-    int found=0;
+    int found = 0;
     for (p = proc; p < &proc[NPROC]; p++) {
 //            acquire(&p->lock);
         if (p->pid == pid) {
-            found=1;
+            found = 1;
             break;
         }
     }
-    if(found==0)
+    if (found == 0)
         return -1;
-    info.cpu_burst_time=(p->running_time)/10;
-    info.waiting_time=p->sleeping_time/10;
-    info.turnaround_time=(p->termination_time-p->startingTick)/10;
+    info.cpu_burst_time = (p->running_time) / 10;
+    info.waiting_time = p->sleeping_time / 10;
+    if (p->termination_time - p->startingTick < 0)
+        info.turnaround_time = 0;
+    else
+        info.turnaround_time = (p->termination_time - p->startingTick);
     if (copyout(myproc()->pagetable, uinfo, (char *) &info, sizeof(struct procinfo)) < 0) {
         return -1;
     }
@@ -785,3 +777,18 @@ int proctick(int pid) {
     return -1;
 }
 
+void update_pinfo() {
+    struct proc *p;
+    for (p = proc; p < &proc[NPROC]; p++) {
+        acquire(&p->lock);
+        if (p->state == SLEEPING) {
+            p->sleeping_time++;
+        } else if (p->state == RUNNING) {
+            p->running_time++;
+        } else if (p->state == RUNNABLE) {
+            p->ready_time++;
+        }
+        release(&p->lock);
+
+    }
+}

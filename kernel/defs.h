@@ -85,7 +85,7 @@ void            panic(char*) __attribute__((noreturn));
 void            printfinit(void);
 
 // proc.c
-extern struct proc proc[NPROC];
+void update_pinfo();
 int             cpuid(void);
 int             proctick(int);
 void            exit(int);

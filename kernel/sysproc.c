@@ -103,12 +103,12 @@ uint64 sys_sysinfo(void) {
 }
 uint64 sys_procinfo(void) {
     uint64 info;
-    int *pid;
-    argint(1,pid);
+    int pid;
+    argint(1,&pid);
     argaddr(0, &info);
     if(info<0)
         return -1;
-    int ret = procinfo(info,*pid);
+    int ret = procinfo(info,pid);
     return ret;
 
 }
