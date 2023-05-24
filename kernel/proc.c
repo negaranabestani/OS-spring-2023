@@ -433,6 +433,71 @@ wait(uint64 addr) {
 //  - eventually that process transfers control
 //    via swtch back to the scheduler.
 
+int fcfs(struct proc *p,
+         struct cpu *c) {
+
+    c->proc = 0;
+    // Avoid deadlock by ensuring that devices can interrupt.*
+//        intr_on();
+    intr_off();
+    int found = 0;
+    struct proc *minP = 0;
+    for (p = proc; p < &proc[NPROC]; p++) {
+
+
+
+        if (p->state != RUNNABLE)
+            continue;
+
+
+        if (p->pid > 1) {
+            acquire(&p->lock);
+            found = 1;
+            if (minP != 0) {
+                if (p->startingTick < minP->startingTick)
+                    minP = p;
+            } else
+                minP = p;
+            release(&p->lock);
+        }
+
+
+
+
+    }
+    if (minP != 0 && minP->state == RUNNABLE) {
+        p = minP;
+        acquire(&p->lock);
+        p->state = RUNNING;
+        c->proc = p;
+        swtch(&c->context, &p->context);
+        // Process is done running for now.
+        // It should have changed its p->state before coming back.
+        c->proc = 0;
+        release(&p->lock);
+    }
+    return found;
+//        } else {
+//
+//            for (p = proc; p < &proc[1]; p++) {
+//                acquire(&p->lock);
+//                if (p->state == RUNNABLE) {
+//                    p->state = RUNNING;
+//                    c->proc = p;
+//                    swtch(&c->context, &p->context);
+//                    // Process is done running for now.
+//                    // It should have changed its p->state before coming back.
+//                    c->proc = 0;
+//                }
+//                release(&p->lock);
+//                if (found == 0) {
+//                    intr_on();
+//                    asm volatile("wfi");
+//                }
+//            }
+//        }
+
+}
 
 void default_Scheduler() {
     struct proc *p;
@@ -469,56 +534,49 @@ void default_Scheduler() {
     }
 }
 
+void round_robin(struct proc *p,
+                 struct cpu *c, int num) {
 
-void
-scheduler(void) {
-    struct proc *p = 0;
-    struct cpu *c = mycpu();
 
     c->proc = 0;
-    for (;;) {
-        // Avoid deadlock by ensuring that devices can interrupt.*
-        intr_on();
-        int found = 0;
-        struct proc *minP = 0;
-        for (p = proc; p < &proc[NPROC]; p++) {
-
-
-            acquire(&p->lock);
-            if (p->state != RUNNABLE)
-                continue;
-
-            found=1;
-            if (p->pid > 1) {
-                if (minP != 0) {
-                    if (p->startingTick < minP->startingTick)
-                        minP = p;
-                } else
-                    minP = p;
-            }
-
-            release(&p->lock);
-
-
-        }
-        if (minP != 0 && minP->state == RUNNABLE)
-            p = minP;
-
+    intr_on();
+    int found = 0;
+    for (p = proc; p < &proc[num]; p++) {
         acquire(&p->lock);
-        p->state = RUNNING;
-        c->proc = p;
-        swtch(&c->context, &p->context);
-        // Process is done running for now.
-        // It should have changed its p->state before coming back.
-        c->proc = 0;
+        if (p->state == RUNNABLE) {
+            // Switch to chosen process.  It is the process's job
+            // to release its lock and then reacquire it
+            // before jumping back to us.
+            found = 1;
+            p->state = RUNNING;
+            c->proc = p;
+            swtch(&c->context, &p->context);
+
+            // Process is done running for now.
+            // It should have changed its p->state before coming back.
+            c->proc = 0;
+        }
         release(&p->lock);
         if (found == 0) {
             intr_on();
             asm volatile("wfi");
         }
-
-
     }
+}
+
+void
+scheduler(void) {
+    struct proc *p=0;
+    struct cpu *c = mycpu();
+    for (;;) {
+        int found = fcfs(p, c);
+        if (found == 0) {
+//            printf("round_robin\n");
+            round_robin(p, c,1);
+        }
+    }
+
+
 }
 
 // Switch to scheduler.  Must hold only p->lock
@@ -765,15 +823,15 @@ int proctick(int pid) {
     struct proc *p;
 //    for (;;) {
     // Avoid deadlock by ensuring that devices can interrupt.
-//        intr_on();
+    intr_on();
     for (p = proc; p < &proc[NPROC]; p++) {
 //            acquire(&p->lock);
         if (p->pid == pid) {
             return ticks - p->startingTick;
         }
 //            release(&p->lock);
-//        }
     }
     return -1;
-}
+//    }
 
+}
