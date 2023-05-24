@@ -106,3 +106,13 @@ uint64 sys_proctick(void){
     argint(0, &pid);
     return proctick(pid);
 }
+
+uint64 sys_changeScheduler(void){
+    int pid;
+    argint(0, &pid);
+    char scheduler_name[MAXARG];
+
+    if(argstr(1, scheduler_name, MAXARG) < 0)
+        return -1;
+    return changeScheduler(pid,scheduler_name);
+}

@@ -121,7 +121,7 @@ allocproc(void) {
     found:
     p->pid = allocpid();
     p->state = USED;
-
+    p->sched = RR ;
     // Allocate a trapframe page.
     if ((p->trapframe = (struct trapframe *) kalloc()) == 0) {
         freeproc(p);
@@ -450,7 +450,7 @@ int fcfs(struct proc *p,
             continue;
 
 
-        if (p->pid > 1) {
+        if (p->sched == FCFS) {
             acquire(&p->lock);
             found = 1;
             if (minP != 0) {
@@ -473,6 +473,7 @@ int fcfs(struct proc *p,
         swtch(&c->context, &p->context);
         // Process is done running for now.
         // It should have changed its p->state before coming back.
+        
         c->proc = 0;
         release(&p->lock);
     }
@@ -543,7 +544,7 @@ void round_robin(struct proc *p,
     int found = 0;
     for (p = proc; p < &proc[num]; p++) {
         acquire(&p->lock);
-        if (p->state == RUNNABLE) {
+        if (p->state == RUNNABLE && p->sched == RR) {
             // Switch to chosen process.  It is the process's job
             // to release its lock and then reacquire it
             // before jumping back to us.
@@ -571,8 +572,8 @@ scheduler(void) {
     for (;;) {
         int found = fcfs(p, c);
         if (found == 0) {
-//            printf("round_robin\n");
-            round_robin(p, c,1);
+            // printf("round_robin\n");
+            round_robin(p, c,3);
         }
     }
 
@@ -834,4 +835,28 @@ int proctick(int pid) {
     return -1;
 //    }
 
+}
+enum schedType find_scheduler_type (char * scheduler_name){
+    if(strncmp(scheduler_name,"fcfs",4)==0 || strncmp(scheduler_name,"FCFC",4)==0){
+        return FCFS;
+    }
+        
+    return RR;
+}
+
+int changeScheduler(int pid,char *scheduler_name){
+    struct proc *p;
+    for (p = proc; p < &proc[NPROC]; p++) {
+            acquire(&p->lock);
+            if (p->pid == pid) {
+                p->sched = find_scheduler_type(scheduler_name);
+                // printf("process %d : ----> scheduler : %s\n",pid,scheduler_name);
+                release(&p->lock);
+                printf("process %d : ----> scheduler : %s\n",pid,scheduler_name);
+                return 1;
+            }
+            release(&p->lock);
+        }
+    printf("ERROR : process not found !\n");
+    return 0;
 }
