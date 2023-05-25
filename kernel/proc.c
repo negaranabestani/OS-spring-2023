@@ -837,26 +837,60 @@ int proctick(int pid) {
 
 }
 enum schedType find_scheduler_type (char * scheduler_name){
-    if(strncmp(scheduler_name,"fcfs",4)==0 || strncmp(scheduler_name,"FCFC",4)==0){
+    if(strncmp(scheduler_name,"fcfs",4)==0 || strncmp(scheduler_name,"FCFS",4)==0){
         return FCFS;
     }
         
     return RR;
 }
+void print_process_scheduler(int pid){
+    struct proc *p;
+    
+    for (p = proc; p < &proc[NPROC]; p++) {
+        acquire(&p->lock);
+        if(p->pid == pid)
+            printf("proc = %d  --->  sched = %s\n",p->pid , (p->sched == RR)?"RR":"FCFS");
+        release(&p->lock);
+    }
+}
 
 int changeScheduler(int pid,char *scheduler_name){
+    print_process_scheduler(pid );
     struct proc *p;
+    intr_off();
+    printf("before change scheduler : \n");
+    print_process_scheduler(pid);
+    
     for (p = proc; p < &proc[NPROC]; p++) {
-            acquire(&p->lock);
+        acquire(&p->lock);
             if (p->pid == pid) {
+                // int 
                 p->sched = find_scheduler_type(scheduler_name);
+                
                 // printf("process %d : ----> scheduler : %s\n",pid,scheduler_name);
                 release(&p->lock);
-                printf("process %d : ----> scheduler : %s\n",pid,scheduler_name);
+                printf("after change scheduler : \n");
+                print_process_scheduler(pid);
                 return 1;
+                // printf("process %d : ----> scheduler : %s\n",pid,scheduler_name);
+                
             }
             release(&p->lock);
-        }
+    }
+
     printf("ERROR : process not found !\n");
+    print_process_scheduler(pid);
+    
     return 0;
 }
+//     struct proc *p;
+// 	acquire(&ptable.lock);
+// 	for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+// 	  if(p->pid == pid){
+// 			p->priority = priority;
+// 			break;
+// 		}
+// 	}
+// 	release(&ptable.lock);
+// 	return pid;
+// }
