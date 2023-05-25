@@ -81,7 +81,7 @@ struct trapframe {
 
 enum procstate { UNUSED, USED, SLEEPING, RUNNABLE, RUNNING, ZOMBIE };
 
-enum schedType {FCFS , RR};
+enum schedType {RR,FCFS};
 
 // Per-process state
 struct proc {
