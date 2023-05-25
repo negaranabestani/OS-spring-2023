@@ -9,6 +9,7 @@ struct sleeplock;
 struct stat;
 struct superblock;
 struct sysinfo;
+struct procinfo;
 
 // bio.c
 void            binit(void);
@@ -84,10 +85,12 @@ void            panic(char*) __attribute__((noreturn));
 void            printfinit(void);
 
 // proc.c
+void update_pinfo();
 int             cpuid(void);
 int             proctick(int);
 void            exit(int);
 int             sysinfo(uint64);
+int             procinfo(uint64,int);
 int             fork(void);
 int             growproc(int);
 void            proc_mapstacks(pagetable_t);

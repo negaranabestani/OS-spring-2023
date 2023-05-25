@@ -22,4 +22,6 @@
 #define SYS_close  21
 #define SYS_sysinfo 22
 #define SYS_proctick 23
-#define SYS_changeScheduler 24
+#define SYS_procinfo 24
+#define SYS_changeScheduler 25
+

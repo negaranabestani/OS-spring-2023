@@ -25,6 +25,7 @@ int uptime(void);
 int sysinfo(uint64);
 int proctick(int);
 int changeScheduler(int ,char *);
+int procinfo(uint64, int);
 
 // ulib.c
 int stat(const char*, struct stat*);
