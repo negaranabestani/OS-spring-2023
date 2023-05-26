@@ -855,6 +855,7 @@ int proctick(int pid) {
 }
 enum schedType find_scheduler_type (char * scheduler_name){
     if(strncmp(scheduler_name,"fcfs",4)==0 || strncmp(scheduler_name,"FCFS",4)==0){
+        // printf("here");
         return FCFS;
     }
         
@@ -872,6 +873,7 @@ void print_process_scheduler(int pid){
 }
 
 int changeScheduler(int pid,char *scheduler_name){
+
     print_process_scheduler(pid );
     struct proc *p;
     intr_off();
@@ -900,17 +902,6 @@ int changeScheduler(int pid,char *scheduler_name){
     
     return 0;
 }
-//     struct proc *p;
-// 	acquire(&ptable.lock);
-// 	for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
-// 	  if(p->pid == pid){
-// 			p->priority = priority;
-// 			break;
-// 		}
-// 	}
-// 	release(&ptable.lock);
-// 	return pid;
-// }
 
 void update_pinfo() {
     struct proc *p;
