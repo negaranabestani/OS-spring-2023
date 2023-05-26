@@ -810,8 +810,8 @@ int procinfo(uint64 uinfo, int pid) {
     }
     if (found == 0)
         return -1;
-    info.cpu_burst_time = (p->running_time) / 10;
-    info.waiting_time = p->sleeping_time / 10;
+    info.cpu_burst_time = (p->running_time) ;
+    info.waiting_time = p->sleeping_time ;
     if (p->termination_time - p->startingTick < 0)
         info.turnaround_time = 0;
     else
@@ -874,11 +874,11 @@ void print_process_scheduler(int pid){
 
 int changeScheduler(int pid,char *scheduler_name){
 
-    print_process_scheduler(pid );
+    // print_process_scheduler(pid );
     struct proc *p;
     intr_off();
-    printf("before change scheduler : \n");
-    print_process_scheduler(pid);
+    // printf("before change scheduler : \n");
+    // print_process_scheduler(pid);
     
     for (p = proc; p < &proc[NPROC]; p++) {
         acquire(&p->lock);
@@ -888,8 +888,8 @@ int changeScheduler(int pid,char *scheduler_name){
                 
                 // printf("process %d : ----> scheduler : %s\n",pid,scheduler_name);
                 release(&p->lock);
-                printf("after change scheduler : \n");
-                print_process_scheduler(pid);
+                // printf("after change scheduler : \n");
+                // print_process_scheduler(pid);
                 return 1;
                 // printf("process %d : ----> scheduler : %s\n",pid,scheduler_name);
                 
@@ -898,7 +898,7 @@ int changeScheduler(int pid,char *scheduler_name){
     }
 
     printf("ERROR : process not found !\n");
-    print_process_scheduler(pid);
+    // print_process_scheduler(pid);
     
     return 0;
 }
