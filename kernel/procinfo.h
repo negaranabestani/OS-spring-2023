@@ -3,6 +3,7 @@
 //
 
 struct procinfo{
+    char name[16];
     int cpu_burst_time;
     int turnaround_time;
     int waiting_time;

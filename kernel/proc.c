@@ -367,6 +367,7 @@ exit(int status) {
     wakeup(p->parent);
 
     acquire(&p->lock);
+    p->termination_time=ticks;
 
     p->xstate = status;
     p->state = ZOMBIE;
@@ -425,6 +426,7 @@ wait(uint64 addr) {
         sleep(p, &wait_lock);  //DOC: wait-sleep
     }
 }
+
 
 // Per-CPU process scheduler.
 // Each CPU calls scheduler() after setting itself up.
@@ -543,6 +545,36 @@ scheduler(void) {
         }
     }
 
+//    struct proc *p;
+//    struct cpu *c = mycpu();
+//
+//    c->proc = 0;
+//    for (;;) {
+//        // Avoid deadlock by ensuring that devices can interrupt.*
+//        intr_on();
+//        int found = 0;
+//        for (p = proc; p < &proc[NPROC]; p++) {
+//            acquire(&p->lock);
+//            if (p->state == RUNNABLE) {
+//                // Switch to chosen process.  It is the process's job
+//                // to release its lock and then reacquire it
+//                // before jumping back to us.
+//                p->state = RUNNING;
+//                c->proc = p;
+//                swtch(&c->context, &p->context);
+//
+//                // Process is done running for now.
+//                // It should have changed its p->state before coming back.
+//                c->proc = 0;
+//            }
+//            release(&p->lock);
+//        }
+//
+//        if (found == 0) {
+//            intr_on();
+//            asm volatile("wfi");
+//        }
+//    }
 
 }
 
@@ -577,10 +609,6 @@ void default_Scheduler() {
             asm volatile("wfi");
         }
     }
-}
-
-void update_procinfo(struct proc *p) {
-
 }
 
 // Switch to scheduler.  Must hold only p->lock
@@ -812,10 +840,7 @@ int procinfo(uint64 uinfo, int pid) {
         return -1;
     info.cpu_burst_time = (p->running_time) ;
     info.waiting_time = p->sleeping_time ;
-    if (p->termination_time - p->startingTick < 0)
-        info.turnaround_time = 0;
-    else
-        info.turnaround_time = (p->termination_time - p->startingTick);
+    info.turnaround_time =p->running_time+p->sleeping_time+p->ready_time ;
     if (copyout(myproc()->pagetable, uinfo, (char *) &info, sizeof(struct procinfo)) < 0) {
         return -1;
     }
