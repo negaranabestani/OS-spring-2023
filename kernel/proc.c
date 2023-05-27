@@ -541,7 +541,7 @@ scheduler(void) {
         int found = fcfs(p, c);
         if (found == 0) {
             // printf("round_robin\n");
-            round_robin(p, c,3);
+            round_robin(p, c,NPROC);
         }
     }
 
