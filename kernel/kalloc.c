@@ -13,6 +13,10 @@ void freerange(void *pa_start, void *pa_end);
 
 void krefinit(void *start, void *end);
 
+void deckref(void *pa);
+
+uint64 refindex(void *pa);
+
 extern char end[]; // first address after kernel.
 // defined by kernel.ld.
 
@@ -26,7 +30,7 @@ struct {
 } kmem;
 struct {
     struct spinlock lock;
-    int ref[(PHYSTOP - end) / PGSIZE];
+    uint64 ref[(PHYSTOP - KERNBASE) / PGSIZE];
 } kref;
 
 void
@@ -50,7 +54,7 @@ void krefinit(void *start, void *end) {
     char *p;
     p = (char *) PGROUNDUP((uint64) start);
     for (; p + PGSIZE <= (char *) end; p += PGSIZE)
-        kref.ref[p] = 0;
+        kref.ref[refindex((void *)p)] = 0;
 }
 
 // Free the page of physical memory pointed at by pa,
@@ -65,10 +69,10 @@ kfree(void *pa) {
         panic("kfree");
 
     acquire(&kref.lock);
-    if (kref.ref[pa] > 1)
-        kref.ref[pa] = kref.ref[pa] - 1;
+    if (kref.ref[refindex(pa)] > 1)
+        kref.ref[refindex(pa)] = kref.ref[refindex(pa)] - 1;
     else {
-        kref.ref[pa] = kref.ref[pa] - 1;
+        kref.ref[refindex(pa)] = kref.ref[refindex(pa)] - 1;
         // Fill with junk to catch dangling refs.
         memset(pa, 1, PGSIZE);
 
@@ -81,11 +85,23 @@ kfree(void *pa) {
     }
     release(&kref.lock);
 }
-void inckref(void *pa){
+
+uint64 refindex(void *pa) {
+    return (PGROUNDDOWN((uint64) pa) - (uint64) end) / PGSIZE;
+}
+
+void inckref(void *pa) {
     acquire(&kref.lock);
-    kref.ref[pa] = kref.ref[pa] + 1;
+    kref.ref[refindex(pa)] = kref.ref[refindex(pa)] + 1;
     release(&kref.lock);
 }
+
+void deckref(void *pa) {
+    acquire(&kref.lock);
+    kref.ref[refindex(pa)] = kref.ref[refindex(pa)] - 1;
+    release(&kref.lock);
+}
+
 // Allocate one 4096-byte page of physical memory.
 // Returns a pointer that the kernel can use.
 // Returns 0 if the memory cannot be allocated.
@@ -98,7 +114,7 @@ kalloc(void) {
     r = kmem.freelist;
     if (r) {
         kmem.freelist = r->next;
-        kref.ref[&r] = kref.ref[&r] + 1;
+        kref.ref[refindex(r)] = kref.ref[refindex(r)] + 1;
     }
     release(&kmem.lock);
     release(&kref.lock);
