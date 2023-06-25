@@ -306,23 +306,24 @@ uvmcopy(pagetable_t old, pagetable_t new, uint64 sz) {
 //        if ((mem = kalloc()) == 0)
 //            goto err;
 //    memmove(mem, (char*)pa, PGSIZE);
-        flags|=PTE_COW;
-        flags&=~PTE_W;
+        flags |= PTE_COW;
+        flags &= ~PTE_W;
         if (mappages(new, i, PGSIZE, (uint64) pa, flags) != 0) {
 //            kfree(mem);
             goto err;
         }
+
         inckref((void *) pa);
-        uvmunmap(old, 0, i / PGSIZE, 1);
-        if (mappages(old, i, PGSIZE, (uint64) pa, flags) != 0) {
+//        uvmunmap(old, i, i / PGSIZE, 0);
+//        if (mappages(old, i, PGSIZE, (uint64) pa, flags) != 0) {
 //            kfree(mem);
-            goto err;
-        }
+//            goto err;
+//        }
     }
     return 0;
 
     err:
-    uvmunmap(new, 0, i / PGSIZE, 1);
+    uvmunmap(new, 0, i / PGSIZE, 0);
     return -1;
 }
 
