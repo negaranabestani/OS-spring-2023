@@ -81,7 +81,11 @@ kfree(void *pa) {
     }
     release(&kref.lock);
 }
-
+void inckref(void *pa){
+    acquire(&kref.lock);
+    kref.ref[pa] = kref.ref[pa] + 1;
+    release(&kref.lock);
+}
 // Allocate one 4096-byte page of physical memory.
 // Returns a pointer that the kernel can use.
 // Returns 0 if the memory cannot be allocated.

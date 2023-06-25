@@ -66,6 +66,7 @@ void*           kalloc(void);
 void            kfree(void *);
 void            kinit(void);
 int             calculate_free_ram();
+void            inckref(void *);
 
 // log.c
 void            initlog(int, struct superblock*);
