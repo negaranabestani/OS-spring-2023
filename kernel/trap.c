@@ -72,15 +72,19 @@ usertrap(void) {
             uint flags = PTE_FLAGS(*pte);
             flags |= PTE_W;
             flags &= (~PTE_COW);
-
             char *mem = kalloc();
             char *pa = (char *) PTE2PA(*pte);
+
             memmove(mem, pa, PGSIZE);
+
+/// todo replace *pte=0 with uvmunmap(p->pagetable, start_va, PGSIZE, 1);
+            *pte = 0;
+            deckref((void *) pa);
 //            kfree(pa);
 //          uvmunmap does not work
-            uvmunmap(p->pagetable, start_va, PGSIZE, 1);
+
             // decrement old pa ref count.
-            deckref((void *) pa);
+
             if (mappages(p->pagetable, start_va, PGSIZE, (uint64) mem, flags) != 0) {
                 p->killed = 1;
             }
