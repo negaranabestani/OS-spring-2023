@@ -88,6 +88,7 @@ usertrap(void) {
             if (mappages(p->pagetable, start_va, PGSIZE, (uint64) mem, flags) != 0) {
                 p->killed = 1;
             }
+            inckref((void *) mem);
         }
     } else if ((which_dev = devintr()) != 0) {
         // ok
