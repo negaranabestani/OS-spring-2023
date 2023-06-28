@@ -6,14 +6,22 @@
 
 int
 main(int argc, char **argv) {
+    printf("allocate 2/3 memory\n");
+
     char *p;
-    uint nu = 128*1024*1024;
+    uint nu = 2/3*(128*1024*1024);
+
     if(nu < 4096)
         nu = 4096;
-    p = sbrk(nu/3*2);
+
+    p = sbrk(nu);
     if(p == (char*)-1)
-        return 0;
+        return -1;
+
+    printf("allocate is done\n");
+
     fork();
-    printf("done!");
-    exit(0);
+
+    printf("done!\n");
+    return 0;
 }
