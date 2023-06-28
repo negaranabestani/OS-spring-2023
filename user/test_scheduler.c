@@ -28,8 +28,9 @@ main(int argc, char **argv) {
     int fork_num = 32, pid = 23, n;
 
     for (n = 0; n < fork_num; n++) {
-        if (pid > 0)
+        if (pid > 0) {
             pid = fork();
+        }
         if (pid < 0) {
             printf("error");
             break;
@@ -60,6 +61,9 @@ main(int argc, char **argv) {
 //    if (pid != 0) {
 //        wait(0);
 //    }
+    for (int i = 0; i < 32; ++i) {
+        wait(0);
+    }
     struct procinfo info1;
     procinfo((uint64) & info1, getpid());
     printf("--------%d---------\n", getpid());
