@@ -956,7 +956,7 @@ join(int tid, void** stack)
         // Scan through table looking for exited children.
         havekids = 0;
         for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
-            if(p->parent != curproc || p->pgdir != curproc->pgdir || p->pid != tid)
+            if(p->parent != curproc || p->pagetable != curproc->pagetable || p->pid != tid)
                 continue;
             havekids = 1;
             if(p->state == ZOMBIE){
@@ -1004,7 +1004,7 @@ clone(void (*function)(void*), void* arg, void* stack)
 
     // Copy process data to new process with page table address
     np->sz = curproc->sz;
-    np->pgdir = curproc->pgdir;
+    np->pagetable = curproc->pagetable;
     np->parent = curproc;
     *np->trapframe = *curproc->trapframe;
 
@@ -1013,18 +1013,18 @@ clone(void (*function)(void*), void* arg, void* stack)
     *(uint*)(stack + PGSIZE - 1 * sizeof(void *)) = (uint64)arg;
     *(uint*)(stack + PGSIZE - 2 * sizeof(void *)) = 0xFFFFFFFF;
 
-    // Set esp (stack pointer register) and ebp (stack base register)
-    // eip (instruction pointer register)
+    // Set sp (stack pointer register) and ebp (stack base register)
+    // epc (instruction pointer register)
     np->trapframe->sp = (uint64)stack + PGSIZE - 2 * sizeof(void*);
-    np->trapframe->eip = (uint64) function;
+    np->trapframe->epc = (uint64) function;
 
     // Set thread stack
     np->tstack = (uint64)stack;
 
     // </Code for new thread>
 
-    // Clear %eax so that fork returns 0 in the child.
-    np->trapframe->eax = 0;
+    // Clear %a0 so that fork returns 0 in the child.
+    np->trapframe->a0 = 0;
 
     for(i = 0; i < NOFILE; i++)
         if(curproc->ofile[i])

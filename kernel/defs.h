@@ -66,6 +66,8 @@ void*           kalloc(void);
 void            kfree(void *);
 void            kinit(void);
 int             calculate_free_ram();
+void            inckref(void *);
+void            deckref(void *);
 
 // log.c
 void            initlog(int, struct superblock*);
@@ -192,6 +194,9 @@ void            plic_complete(int);
 void            virtio_disk_init(void);
 void            virtio_disk_rw(struct buf *, int);
 void            virtio_disk_intr(void);
+
+//console.c
+int history(int historyId);
 
 // number of elements in fixed-size array
 #define NELEM(x) (sizeof(x)/sizeof((x)[0]))

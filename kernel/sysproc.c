@@ -127,30 +127,22 @@ uint64 sys_changeScheduler(void){
         return -1;
     return changeScheduler(pid,scheduler_name);
 }
-sys_clone(void) {
+uint64 sys_clone(void) {
     int function, arg, stack;
     argint(0, &function);
-    if (function < 0)
-        return -1;
     argint(1, &arg);
-    if (arg < 0)
-        return -1;
     argint(2, &stack);
-    if (stack < 0)
-        return -1;
-
     return clone((void *) &function, (void *) &arg, (void *) &stack);
 }
 
-int
-sys_join(void) {
+uint64 sys_join(void) {
     int tid, stack;
     argint(0, &tid);
-    if (tid < 0)
-        return -1;
     argint(1, &stack);
-    if ( stack< 0)
-        return -1;
-
     return join(tid, (void **) &stack);
+
+uint64 sys_history(void) {
+    int historyId;
+    argint(0, &historyId);
+    return history(historyId);
 }

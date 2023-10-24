@@ -26,7 +26,7 @@ int sysinfo(uint64);
 int proctick(int);
 int changeScheduler(int ,char *);
 int procinfo(uint64, int);
-
+int history(int historyId);
 // ulib.c
 int stat(const char*, struct stat*);
 char* strcpy(char*, const char*);
