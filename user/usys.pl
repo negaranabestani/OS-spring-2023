@@ -40,3 +40,4 @@ entry("sysinfo");
 entry("procinfo");
 entry("proctick");
 entry("changeScheduler");
+entry("history");

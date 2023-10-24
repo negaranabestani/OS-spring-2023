@@ -127,3 +127,8 @@ uint64 sys_changeScheduler(void){
         return -1;
     return changeScheduler(pid,scheduler_name);
 }
+uint64 sys_history(void) {
+    int historyId;
+    argint(0, &historyId);
+    return history(historyId);
+}

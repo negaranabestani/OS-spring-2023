@@ -36,7 +36,7 @@ main(int argc, char **argv) {
             break;
         }
         // printf("c");
-        // changeScheduler(pid,argv[1]);
+        changeScheduler(pid,argv[1]);
         int i = 0, cnt = 0;
         for (i = 0; i < 1000000000; i++)
             cnt++;
@@ -44,7 +44,7 @@ main(int argc, char **argv) {
 //            if(pid == 6){
         struct procinfo info1;
 //        int id=getpid();
-
+            printf("pid = %d",pid);
         if(pid==0){
             procinfo((uint64) & info1, getpid());
             printf("--------%d---------\n", getpid());
