@@ -47,7 +47,7 @@ struct trapframe {
   /*  24 */ uint64 epc;           // saved user program counter
   /*  32 */ uint64 kernel_hartid; // saved kernel tp
   /*  40 */ uint64 ra;
-  /*  48 */ uint64 sp;
+  /*  48 */ uint64 sp; //stack pointer
   /*  56 */ uint64 gp;
   /*  64 */ uint64 tp;
   /*  72 */ uint64 t0;
@@ -71,8 +71,8 @@ struct trapframe {
   /* 216 */ uint64 s7;
   /* 224 */ uint64 s8;
   /* 232 */ uint64 s9;
-  /* 240 */ uint64 s10;
-  /* 248 */ uint64 s11;
+  /* 240 */ uint64 s10; //callee saved
+  /* 248 */ uint64 s11; //callee saved
   /* 256 */ uint64 t3;
   /* 264 */ uint64 t4;
   /* 272 */ uint64 t5;
@@ -103,6 +103,7 @@ struct proc {
 
   // these are private to the process, so p->lock need not be held.
   uint64 kstack;               // Virtual address of kernel stack
+  uint64 tstack;               // address of thread stack
   uint64 sz;                   // Size of process memory (bytes)
   pagetable_t pagetable;       // User page table
   struct trapframe *trapframe; // data page for trampoline.S
@@ -113,3 +114,4 @@ struct proc {
                 // Process name (debugging)
   enum schedType sched ;
 };
+

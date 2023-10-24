@@ -943,3 +943,103 @@ void update_pinfo() {
 
     }
 }
+
+int
+join(int tid, void** stack)
+{
+    struct proc *p;
+    int havekids, pid;
+    struct proc *curproc = myproc();
+
+    acquire(&ptable.lock);
+    for(;;){
+        // Scan through table looking for exited children.
+        havekids = 0;
+        for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+            if(p->parent != curproc || p->pgdir != curproc->pgdir || p->pid != tid)
+                continue;
+            havekids = 1;
+            if(p->state == ZOMBIE){
+                // Found one.
+                pid = p->pid;
+                kfree((void *)p->kstack);
+                p->kstack = 0;
+                *stack = (void *)p->tstack;
+                p->tstack = 0;
+                p->pid = 0;
+                p->parent = 0;
+                p->name[0] = 0;
+                p->killed = 0;
+                p->state = UNUSED;
+
+                release(&ptable.lock);
+                return pid;
+            }
+        }
+
+        // No point waiting if we don't have any children.
+        if(!havekids || curproc->killed){
+            release(&ptable.lock);
+            return -1;
+        }
+
+        // Wait for children to exit.  (See wakeup1 call in proc_exit.)
+        sleep(curproc, &ptable.lock);  //DOC: wait-sleep
+    }
+}
+
+int
+clone(void (*function)(void*), void* arg, void* stack)
+{
+    int i, pid;
+    struct proc *np;
+    struct proc *curproc = myproc();
+
+    // Allocate process.
+    if((np = allocproc()) == 0){
+        return -1;
+    }
+
+    // <Code for new thread>
+
+    // Copy process data to new process with page table address
+    np->sz = curproc->sz;
+    np->pgdir = curproc->pgdir;
+    np->parent = curproc;
+    *np->trapframe = *curproc->trapframe;
+
+    // Stack pointer is at the bottom, bring it up; push return
+    // address and arg
+    *(uint*)(stack + PGSIZE - 1 * sizeof(void *)) = (uint64)arg;
+    *(uint*)(stack + PGSIZE - 2 * sizeof(void *)) = 0xFFFFFFFF;
+
+    // Set esp (stack pointer register) and ebp (stack base register)
+    // eip (instruction pointer register)
+    np->trapframe->sp = (uint64)stack + PGSIZE - 2 * sizeof(void*);
+    np->trapframe->eip = (uint64) function;
+
+    // Set thread stack
+    np->tstack = (uint64)stack;
+
+    // </Code for new thread>
+
+    // Clear %eax so that fork returns 0 in the child.
+    np->trapframe->eax = 0;
+
+    for(i = 0; i < NOFILE; i++)
+        if(curproc->ofile[i])
+            np->ofile[i] = filedup(curproc->ofile[i]);
+    np->cwd = idup(curproc->cwd);
+
+    safestrcpy(np->name, curproc->name, sizeof(curproc->name));
+
+    pid = np->pid;
+
+    acquire(&ptable.lock);
+
+    np->state = RUNNABLE;
+
+    release(&ptable.lock);
+
+    return pid;
+}
