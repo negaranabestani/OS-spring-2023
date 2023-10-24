@@ -24,4 +24,5 @@
 #define SYS_proctick 23
 #define SYS_procinfo 24
 #define SYS_changeScheduler 25
+#define SYS_history 26
 

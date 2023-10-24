@@ -105,6 +105,7 @@ extern uint64 sys_sysinfo(void);
 extern uint64 sys_proctick(void);
 extern uint64 sys_changeScheduler(void);
 extern uint64 sys_procinfo(void);
+extern uint64 sys_history(void);
 
 // An array mapping syscall numbers from syscall.h
 // to the function that handles the system call.
@@ -134,6 +135,7 @@ static uint64 (*syscalls[])(void) = {
 [SYS_proctick]   sys_proctick,
 [SYS_changeScheduler]   sys_changeScheduler,
 [SYS_procinfo]   sys_procinfo,
+[SYS_history]   sys_history,
 };
 
 void

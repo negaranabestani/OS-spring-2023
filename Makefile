@@ -118,6 +118,7 @@ mkfs/mkfs: mkfs/mkfs.c $K/fs.h $K/param.h
 UPROGS=\
 	$U/_cat\
 	$U/_sysinfo\
+	$U/_history\
 	$U/_procinfo\
 	$U/_proctick\
 	$U/_echo\
