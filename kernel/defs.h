@@ -87,7 +87,7 @@ void            panic(char*) __attribute__((noreturn));
 void            printfinit(void);
 
 // proc.c
-void update_pinfo();
+void            update_pinfo();
 int             cpuid(void);
 int             proctick(int);
 void            exit(int);
@@ -116,6 +116,8 @@ int             either_copyout(int user_dst, uint64 dst, void *src, uint64 len);
 int             either_copyin(void *dst, int user_src, uint64 src, uint64 len);
 void            procdump(void);
 int             changeScheduler(int ,char *);
+int             clone(void (*function)(void*), void* arg, void* stack);
+int             join(int tid, void** stack);
 
 // swtch.S
 void            swtch(struct context*, struct context*);

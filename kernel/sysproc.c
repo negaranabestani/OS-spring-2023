@@ -132,7 +132,9 @@ uint64 sys_clone(void) {
     argint(0, &function);
     argint(1, &arg);
     argint(2, &stack);
-    return clone((void *) &function, (void *) &arg, (void *) &stack);
+    int c=clone((void *) &function, (void *) &arg, (void *) &stack);
+    printf("end clone\n");
+    return c;
 }
 
 uint64 sys_join(void) {
@@ -140,6 +142,7 @@ uint64 sys_join(void) {
     argint(0, &tid);
     argint(1, &stack);
     return join(tid, (void **) &stack);
+}
 
 uint64 sys_history(void) {
     int historyId;

@@ -139,6 +139,7 @@ UPROGS=\
 	$U/_change_scheduler\
 	$U/_test_scheduler\
 	$U/_test_page_sharing\
+	$U/_test_thread\
 
 fs.img: mkfs/mkfs README $(UPROGS)
 	mkfs/mkfs fs.img README $(UPROGS)

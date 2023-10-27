@@ -41,3 +41,5 @@ entry("procinfo");
 entry("proctick");
 entry("changeScheduler");
 entry("history");
+entry("clone");
+entry("join");

@@ -27,6 +27,8 @@ int proctick(int);
 int changeScheduler(int ,char *);
 int procinfo(uint64, int);
 int history(int historyId);
+int clone(void (*function)(void*), void* arg, void* stack);
+int join(int tid, void** stack);
 // ulib.c
 int stat(const char*, struct stat*);
 char* strcpy(char*, const char*);
@@ -43,3 +45,4 @@ void free(void*);
 int atoi(const char*);
 int memcmp(const void *, const void *, uint);
 void *memcpy(void *, const void *, uint);
+

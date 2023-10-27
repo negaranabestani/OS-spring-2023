@@ -72,23 +72,21 @@ cpuid() {
 
 // Return this CPU's cpu struct.
 // Interrupts must be disabled.
-struct cpu *
-mycpu(void) {
+
+struct cpu * mycpu(void) {
     int id = cpuid();
     struct cpu *c = &cpus[id];
     return c;
 }
 
 // Return the current struct proc *, or zero if none.
-struct proc *
-myproc(void) {
+struct proc * myproc(void) {
     push_off();
     struct cpu *c = mycpu();
     struct proc *p = c->proc;
     pop_off();
     return p;
 }
-
 int
 allocpid() {
     int pid;
@@ -100,7 +98,6 @@ allocpid() {
 
     return pid;
 }
-
 // Look in the process table for an UNUSED proc.
 // If found, initialize state required to run in the kernel,
 // and return with p->lock held.
@@ -264,6 +261,9 @@ growproc(int n) {
         sz = uvmdealloc(p->pagetable, sz, sz + n);
     }
     p->sz = sz;
+//    for (int i = 0; i < ; ++i) {
+//
+//    }
     return 0;
 }
 
@@ -476,7 +476,7 @@ int fcfs(struct proc *p,
         swtch(&c->context, &p->context);
         // Process is done running for now.
         // It should have changed its p->state before coming back.
-        
+
         c->proc = 0;
         release(&p->lock);
     }
@@ -539,6 +539,7 @@ scheduler(void) {
     struct cpu *c = mycpu();
     for (;;) {
         int found = fcfs(p, c);
+//        printf("found\n");
         if (found == 0) {
             // printf("round_robin\n");
             round_robin(p, c,NPROC);
@@ -951,11 +952,12 @@ join(int tid, void** stack)
     int havekids, pid;
     struct proc *curproc = myproc();
 
-    acquire(&ptable.lock);
+
     for(;;){
         // Scan through table looking for exited children.
         havekids = 0;
-        for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+        for(p = proc; p < &proc[NPROC]; p++){
+            acquire(&p->lock);
             if(p->parent != curproc || p->pagetable != curproc->pagetable || p->pid != tid)
                 continue;
             havekids = 1;
@@ -971,20 +973,18 @@ join(int tid, void** stack)
                 p->name[0] = 0;
                 p->killed = 0;
                 p->state = UNUSED;
-
-                release(&ptable.lock);
                 return pid;
             }
         }
+        release(&p->lock);
 
         // No point waiting if we don't have any children.
         if(!havekids || curproc->killed){
-            release(&ptable.lock);
             return -1;
         }
 
         // Wait for children to exit.  (See wakeup1 call in proc_exit.)
-        sleep(curproc, &ptable.lock);  //DOC: wait-sleep
+        sleep(curproc, &curproc->lock);  //DOC: wait-sleep
     }
 }
 
@@ -997,49 +997,71 @@ clone(void (*function)(void*), void* arg, void* stack)
 
     // Allocate process.
     if((np = allocproc()) == 0){
+        printf("alloc proc\n");
         return -1;
     }
 
     // <Code for new thread>
 
     // Copy process data to new process with page table address
+    acquire(&curproc->lock);
     np->sz = curproc->sz;
+    printf("sz init\n");
     np->pagetable = curproc->pagetable;
+    printf("pagetable init\n");
     np->parent = curproc;
+    printf("parent init\n");
     *np->trapframe = *curproc->trapframe;
+    printf("trapframe init\n");
+    np->trapframe->sp = ((uint64)stack + PGSIZE)%16;
+    printf("sp init\n");
+    np->trapframe->sp -=strlen(arg);
+    np->trapframe->sp =np->trapframe->sp%16;
+    copyout(np->pagetable, np->trapframe->sp, (char *)arg, strlen(arg));
 
     // Stack pointer is at the bottom, bring it up; push return
     // address and arg
-    *(uint*)(stack + PGSIZE - 1 * sizeof(void *)) = (uint64)arg;
-    *(uint*)(stack + PGSIZE - 2 * sizeof(void *)) = 0xFFFFFFFF;
+//    *(uint*)((uint64)stack + PGSIZE - 1 * sizeof(uint64)) = (uint64)arg;
+    printf("arg init\n");
+    np->trapframe->sp -=sizeof (uint64);
+    printf("ret add 1\n");
+    np->trapframe->sp =np->trapframe->sp%16;
+    printf("ret add 2\n");
+    uint64 retadd=0xFFFFFFFF;
+    copyout(np->pagetable, np->trapframe->sp,(char *)&retadd , sizeof(uint64));
+//    *(uint*)((uint64)stack + PGSIZE - 2 * sizeof(uint64)) = 0xFFFFFFFF;
+//    sp -= (arg+1) * sizeof(uint64);
+//    sp -= sp % 16;
 
+    printf("return address init\n");
     // Set sp (stack pointer register) and ebp (stack base register)
     // epc (instruction pointer register)
-    np->trapframe->sp = (uint64)stack + PGSIZE - 2 * sizeof(void*);
+
+    np->trapframe->ra=(uint64) function;
     np->trapframe->epc = (uint64) function;
+    printf("epc init\n");
 
     // Set thread stack
     np->tstack = (uint64)stack;
+    printf("tstack init\n");
 
     // </Code for new thread>
 
     // Clear %a0 so that fork returns 0 in the child.
-    np->trapframe->a0 = 0;
+    np->trapframe->a1 = 0;
+    printf("a1 init\n");
 
     for(i = 0; i < NOFILE; i++)
         if(curproc->ofile[i])
             np->ofile[i] = filedup(curproc->ofile[i]);
     np->cwd = idup(curproc->cwd);
-
+    printf("cwd init\n");
     safestrcpy(np->name, curproc->name, sizeof(curproc->name));
-
+    printf("name init\n");
+    release(&curproc->lock);
+    printf("end release\n");
     pid = np->pid;
-
-    acquire(&ptable.lock);
-
     np->state = RUNNABLE;
-
-    release(&ptable.lock);
 
     return pid;
 }

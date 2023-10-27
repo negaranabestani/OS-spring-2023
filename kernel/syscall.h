@@ -25,4 +25,6 @@
 #define SYS_procinfo 24
 #define SYS_changeScheduler 25
 #define SYS_history 26
+#define SYS_clone 27
+#define SYS_join 28
 
